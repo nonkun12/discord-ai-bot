@@ -1,41 +1,31 @@
-// ===============================
-// Discord AI Bot for Render
-// ===============================
-
-// 環境変数読み込み
 require("dotenv").config();
 
-// 設定確認
-console.log("=== Bot起動プロセス開始 ===");
-console.log("DISCORD_TOKEN設定:", process.env.DISCORD_TOKEN ? "OK" : "NG");
-console.log("GROQ_API_KEY設定:", process.env.GROQ_API_KEY ? "OK" : "NG");
+console.log("=== BOT START ===");
+console.log("DISCORD_TOKEN:", process.env.DISCORD_TOKEN ? "OK" : "NG");
+console.log("GROQ_API_KEY:", process.env.GROQ_API_KEY ? "OK" : "NG");
 
 if (!process.env.DISCORD_TOKEN || !process.env.GROQ_API_KEY) {
-  console.error("【エラー】環境変数が正しく読み込めていません。");
+  console.error("❌ 環境変数が不足しています");
   process.exit(1);
 }
 
-// ===============================
-// Express（Render無料プラン対策）
-// ===============================
-
+// ======================
+// Express（Render対策）
+// ======================
 const express = require("express");
 const app = express();
 
-const PORT = process.env.PORT || 3000;
-
 app.get("/", (req, res) => {
-  res.send("Discord AI Bot is running!");
+  res.send("Discord AI Bot is running");
 });
 
-app.listen(PORT, () => {
-  console.log(`Web Server started on port ${PORT}`);
+app.listen(process.env.PORT || 3000, () => {
+  console.log("🌐 Web server started");
 });
 
-// ===============================
+// ======================
 // Discord
-// ===============================
-
+// ======================
 const { Client, GatewayIntentBits } = require("discord.js");
 const axios = require("axios");
 
@@ -43,93 +33,83 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ],
+    GatewayIntentBits.MessageContent
+  ]
 });
 
-// ===============================
-// Groq AI
-// ===============================
+// ======================
+// Ready
+// ======================
+client.once("ready", () => {
+  console.log("🟢 READY EVENT FIRED");
+  console.log(`Logged in as ${client.user.tag}`);
+});
 
-async function askGroq(userMessage) {
+// ======================
+// Message Handler
+// ======================
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
+  console.log("📩 MESSAGE:", message.content);
+
+  const isMention = message.mentions.has(client.user);
+  const isCommand = message.content.startsWith("!");
+
+  // メンション or !コマンドのみ反応
+  if (!isMention && !isCommand) return;
+
+  let prompt = message.content;
+
+  // メンション削除
+  prompt = prompt.replace(/<@!?\d+>/g, "").trim();
+
+  // !削除
+  if (isCommand) {
+    prompt = prompt.slice(1).trim();
+  }
+
+  if (!prompt) {
+    return message.reply("何か書いてください");
+  }
+
   try {
-    const response = await axios.post(
+    await message.channel.sendTyping();
+
+    const res = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
         model: "llama-3.3-70b-versatile",
         messages: [
           {
             role: "system",
-            content: "日本語で簡潔に答えてください。",
+            content: "あなたは優秀な日本語アシスタントです。簡潔に答えてください。"
           },
           {
             role: "user",
-            content: userMessage,
-          },
-        ],
+            content: prompt
+          }
+        ]
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
+          "Content-Type": "application/json"
+        }
       }
     );
 
-    return response.data.choices[0].message.content;
-  } catch (error) {
-    console.error("====== Groq API Error ======");
+    const answer = res.data.choices[0].message.content;
 
-    if (error.response) {
-      console.error("Status:", error.response.status);
-      console.error(
-        "Data:",
-        JSON.stringify(error.response.data, null, 2)
-      );
-    } else {
-      console.error(error.message);
-    }
-
-    return null;
-  }
-}
-
-// ===============================
-// Discord Events
-// ===============================
-
-client.once("ready", () => {
-  console.log(`【成功】ログインしました：${client.user.tag}`);
-});
-
-client.on("messageCreate", async (message) => {
-  // Bot自身は無視
-  if (message.author.bot) return;
-
-  // メンションされていなければ無視
-  if (!message.mentions.has(client.user)) return;
-
-  // メンションを除去
-  const prompt = message.content.replace(/<@!?\d+>/g, "").trim();
-
-  if (!prompt) {
-    return message.reply("質問を書いてください。");
-  }
-
-  // 入力中表示
-  await message.channel.sendTyping();
-
-  const answer = await askGroq(prompt);
-
-  if (answer) {
     await message.reply(answer);
-  } else {
-    await message.reply("AIサービスとの通信でエラーが発生しました。");
+
+  } catch (err) {
+    console.error("❌ AI ERROR:", err.response?.data || err.message);
+    await message.reply("AIエラーが発生しました");
   }
 });
 
-// ===============================
+// ======================
 // Login
-// ===============================
-
+// ======================
 client.login(process.env.DISCORD_TOKEN);
