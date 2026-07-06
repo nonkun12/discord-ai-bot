@@ -10,13 +10,13 @@ if (!process.env.DISCORD_TOKEN || !process.env.GROQ_API_KEY) {
 }
 
 // ======================
-// Express（Render用死活監視）
+// Express（Render用）
 // ======================
 const express = require("express");
 const app = express();
 
 app.get("/", (req, res) => {
-  res.send("Discord AI Bot is running");
+  res.send("Bot is running");
 });
 
 app.listen(process.env.PORT || 3000, () => {
@@ -27,7 +27,6 @@ app.listen(process.env.PORT || 3000, () => {
 // Discord
 // ======================
 const { Client, GatewayIntentBits } = require("discord.js");
-const axios = require("axios");
 
 const client = new Client({
   intents: [
@@ -38,58 +37,29 @@ const client = new Client({
 });
 
 // ======================
-// READY
+// READY確認
 // ======================
 client.once("ready", () => {
   console.log("🟢 READY EVENT FIRED");
-  console.log(`Logged in as ${client.user.tag}`);
+  console.log("Logged in as:", client.user.tag);
 });
 
 // ======================
-// MESSAGE（常時反応版）
+// 🔥 超重要：完全デバッグ
 // ======================
-client.on("messageCreate", async (message) => {
-  console.log("🔥 MESSAGE EVENT RECEIVED:", message.content);
+client.on("messageCreate", (message) => {
+  console.log("==================================");
+  console.log("🔥 MESSAGE EVENT HIT");
+  console.log("content:", message.content);
+  console.log("author:", message.author.username);
+  console.log("channel:", message.channel.name);
+  console.log("guild:", message.guild?.name);
+  console.log("bot?:", message.author.bot);
+  console.log("==================================");
 
   if (message.author.bot) return;
 
-  const prompt = message.content?.trim();
-  if (!prompt) return;
-
-  try {
-    await message.channel.sendTyping();
-
-    const res = await axios.post(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          {
-            role: "system",
-            content: "あなたは簡潔で分かりやすい日本語AIです。"
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    const answer = res.data.choices[0].message.content;
-
-    await message.reply(answer);
-
-  } catch (err) {
-    console.error("❌ AI ERROR:", err.response?.data || err.message);
-    await message.reply("AIエラーが発生しました");
-  }
+  message.reply("✅ Botはメッセージを受信しています！");
 });
 
 // ======================
