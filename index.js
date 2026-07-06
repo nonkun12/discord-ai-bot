@@ -8,49 +8,23 @@ const {
   Events,
 } = require("discord.js");
 
-//======================================
-// 環境変数確認
-//======================================
-console.log("======================================");
-console.log("=== BOT START ===");
-console.log(
-  "DISCORD_TOKEN:",
-  process.env.DISCORD_TOKEN ? "OK" : "NG"
-);
-console.log(
-  "GROQ_API_KEY:",
-  process.env.GROQ_API_KEY ? "OK" : "NG"
-);
-console.log("======================================");
-
-if (!process.env.DISCORD_TOKEN) {
-  console.error("DISCORD_TOKEN がありません。");
-  process.exit(1);
-}
-
-if (!process.env.GROQ_API_KEY) {
-  console.error("GROQ_API_KEY がありません。");
-  process.exit(1);
-}
-
-//======================================
-// Express（Render用）
-//======================================
+// ======================
+// Express（死活監視用）
+// ======================
 const app = express();
-
-app.get("/", (req, res) => {
-  res.send("Discord AI Bot Running");
-});
-
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log("🌐 Web server started");
+app.get("/", (req, res) => {
+  res.send("Discord AI Bot is running 🚀");
 });
 
-//======================================
-// Discord Client
-//======================================
+app.listen(PORT, () => {
+  console.log(`Web server running on port ${PORT}`);
+});
+
+// ======================
+// Discord Bot
+// ======================
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -59,32 +33,25 @@ const client = new Client({
   ],
 });
 
-//======================================
-// Ready
-//======================================
-client.once(Events.ClientReady, (c) => {
-  console.log("🟢 READY EVENT FIRED");
-  console.log(`Logged in as: ${c.user.tag}`);
+// ======================
+// Bot起動
+// ======================
+client.once(Events.ClientReady, () => {
+  console.log(`ログイン成功: ${client.user.tag}`);
 });
 
-//======================================
+// ======================
 // メッセージ受信
-//======================================
+// ======================
 client.on(Events.MessageCreate, async (message) => {
-  console.log("==================================");
-  console.log("🔥 MESSAGE EVENT RECEIVED");
-  console.log("Guild :", message.guild?.name);
-  console.log("Channel :", message.channel?.name);
-  console.log("Author :", message.author.username);
-  console.log("Content :", message.content);
-  console.log("Bot :", message.author.bot);
-  console.log("==================================");
-
   if (message.author.bot) return;
 
-  try {
-    await message.channel.sendTyping();
+  // 呼び出し条件（例: !ai）
+  if (!message.content.startsWith("!ai ")) return;
 
+  const userText = message.content.replace("!ai ", "");
+
+  try {
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -92,13 +59,14 @@ client.on(Events.MessageCreate, async (message) => {
         messages: [
           {
             role: "system",
-            content: "あなたは親切なAIです。日本語で簡潔に答えてください。",
+            content: "You are a helpful assistant.",
           },
           {
             role: "user",
-            content: message.content,
+            content: userText,
           },
         ],
+        temperature: 0.7,
       },
       {
         headers: {
@@ -108,34 +76,18 @@ client.on(Events.MessageCreate, async (message) => {
       }
     );
 
-    const answer =
-      response.data.choices?.[0]?.message?.content ??
-      "回答を取得できませんでした。";
+    const aiReply =
+      response.data.choices?.[0]?.message?.content ||
+      "応答が取得できませんでした。";
 
-    await message.reply(answer);
-  } catch (err) {
-    console.error("========== ERROR ==========");
-
-    if (err.response) {
-      console.error(err.response.status);
-      console.error(err.response.data);
-    } else {
-      console.error(err);
-    }
-
-    await message.reply("AIとの通信でエラーが発生しました。");
+    await message.reply(aiReply);
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    await message.reply("エラーが発生しました。");
   }
 });
 
-//======================================
-// エラー
-//======================================
-client.on("error", console.error);
-
-process.on("unhandledRejection", console.error);
-process.on("uncaughtException", console.error);
-
-//======================================
-// Login
-//======================================
+// ======================
+// Discordログイン
+// ======================
 client.login(process.env.DISCORD_TOKEN);
