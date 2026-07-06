@@ -16,7 +16,7 @@ const express = require("express");
 const app = express();
 
 app.get("/", (req, res) => {
-  res.send("Bot is running");
+  res.send("Bot running");
 });
 
 app.listen(process.env.PORT || 3000, () => {
@@ -37,7 +37,7 @@ const client = new Client({
 });
 
 // ======================
-// READY確認
+// READY
 // ======================
 client.once("ready", () => {
   console.log("🟢 READY EVENT FIRED");
@@ -45,21 +45,23 @@ client.once("ready", () => {
 });
 
 // ======================
-// 🔥 超重要：完全デバッグ
+// 🔥 超重要デバッグ（ここが一番大事）
 // ======================
 client.on("messageCreate", (message) => {
   console.log("==================================");
-  console.log("🔥 MESSAGE EVENT HIT");
+  console.log("🔥 MESSAGE EVENT RECEIVED");
   console.log("content:", message.content);
   console.log("author:", message.author.username);
+  console.log("bot:", message.author.bot);
   console.log("channel:", message.channel.name);
   console.log("guild:", message.guild?.name);
-  console.log("bot?:", message.author.bot);
   console.log("==================================");
 
+  // Bot自身は無視
   if (message.author.bot) return;
 
-  message.reply("✅ Botはメッセージを受信しています！");
+  // 返信テスト（AIなし）
+  message.reply("✅ 受信OK");
 });
 
 // ======================
