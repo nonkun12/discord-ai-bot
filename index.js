@@ -5,18 +5,18 @@ console.log("DISCORD_TOKEN:", process.env.DISCORD_TOKEN ? "OK" : "NG");
 console.log("GROQ_API_KEY:", process.env.GROQ_API_KEY ? "OK" : "NG");
 
 if (!process.env.DISCORD_TOKEN || !process.env.GROQ_API_KEY) {
-  console.error("❌ 環境変数不足");
+  console.error("❌ 環境変数が不足しています");
   process.exit(1);
 }
 
 // ======================
-// Express（Render用）
+// Express（Render用死活監視）
 // ======================
 const express = require("express");
 const app = express();
 
 app.get("/", (req, res) => {
-  res.send("Bot running");
+  res.send("Discord AI Bot is running");
 });
 
 app.listen(process.env.PORT || 3000, () => {
@@ -38,31 +38,24 @@ const client = new Client({
 });
 
 // ======================
-// READY確認
+// READY
 // ======================
 client.once("ready", () => {
   console.log("🟢 READY EVENT FIRED");
-  console.log("Logged in as:", client.user.tag);
+  console.log(`Logged in as ${client.user.tag}`);
 });
 
 // ======================
-// 🔥 最重要デバッグ（まずここが動くか）
+// MESSAGE（常時反応版）
 // ======================
-client.on("messageCreate", (message) => {
-  console.log("🔥 MESSAGE EVENT RECEIVED");
-  console.log("📩 content:", message.content);
-  console.log("👤 author:", message.author.username);
+client.on("messageCreate", async (message) => {
+  console.log("🔥 MESSAGE EVENT RECEIVED:", message.content);
 
   if (message.author.bot) return;
 
-  // 👉 まずは全部AIに通す（テスト用）
-  runAI(message, message.content);
-});
+  const prompt = message.content?.trim();
+  if (!prompt) return;
 
-// ======================
-// AI処理
-// ======================
-async function runAI(message, prompt) {
   try {
     await message.channel.sendTyping();
 
@@ -73,7 +66,7 @@ async function runAI(message, prompt) {
         messages: [
           {
             role: "system",
-            content: "あなたは日本語で簡潔に答えるAIです"
+            content: "あなたは簡潔で分かりやすい日本語AIです。"
           },
           {
             role: "user",
@@ -97,7 +90,7 @@ async function runAI(message, prompt) {
     console.error("❌ AI ERROR:", err.response?.data || err.message);
     await message.reply("AIエラーが発生しました");
   }
-}
+});
 
 // ======================
 // LOGIN
