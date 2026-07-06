@@ -5,18 +5,18 @@ console.log("DISCORD_TOKEN:", process.env.DISCORD_TOKEN ? "OK" : "NG");
 console.log("GROQ_API_KEY:", process.env.GROQ_API_KEY ? "OK" : "NG");
 
 if (!process.env.DISCORD_TOKEN || !process.env.GROQ_API_KEY) {
-  console.error("❌ 環境変数が不足しています");
+  console.error("❌ 環境変数不足");
   process.exit(1);
 }
 
 // ======================
-// Express（Render対策）
+// Express（Render用）
 // ======================
 const express = require("express");
 const app = express();
 
 app.get("/", (req, res) => {
-  res.send("Discord AI Bot is running");
+  res.send("Bot running");
 });
 
 app.listen(process.env.PORT || 3000, () => {
@@ -38,41 +38,31 @@ const client = new Client({
 });
 
 // ======================
-// Ready
+// READY確認
 // ======================
 client.once("ready", () => {
   console.log("🟢 READY EVENT FIRED");
-  console.log(`Logged in as ${client.user.tag}`);
+  console.log("Logged in as:", client.user.tag);
 });
 
 // ======================
-// Message Handler
+// 🔥 最重要デバッグ（まずここが動くか）
 // ======================
-client.on("messageCreate", async (message) => {
+client.on("messageCreate", (message) => {
+  console.log("🔥 MESSAGE EVENT RECEIVED");
+  console.log("📩 content:", message.content);
+  console.log("👤 author:", message.author.username);
+
   if (message.author.bot) return;
 
-  console.log("📩 MESSAGE:", message.content);
+  // 👉 まずは全部AIに通す（テスト用）
+  runAI(message, message.content);
+});
 
-  const isMention = message.mentions.has(client.user);
-  const isCommand = message.content.startsWith("!");
-
-  // メンション or !コマンドのみ反応
-  if (!isMention && !isCommand) return;
-
-  let prompt = message.content;
-
-  // メンション削除
-  prompt = prompt.replace(/<@!?\d+>/g, "").trim();
-
-  // !削除
-  if (isCommand) {
-    prompt = prompt.slice(1).trim();
-  }
-
-  if (!prompt) {
-    return message.reply("何か書いてください");
-  }
-
+// ======================
+// AI処理
+// ======================
+async function runAI(message, prompt) {
   try {
     await message.channel.sendTyping();
 
@@ -83,7 +73,7 @@ client.on("messageCreate", async (message) => {
         messages: [
           {
             role: "system",
-            content: "あなたは優秀な日本語アシスタントです。簡潔に答えてください。"
+            content: "あなたは日本語で簡潔に答えるAIです"
           },
           {
             role: "user",
@@ -107,9 +97,9 @@ client.on("messageCreate", async (message) => {
     console.error("❌ AI ERROR:", err.response?.data || err.message);
     await message.reply("AIエラーが発生しました");
   }
-});
+}
 
 // ======================
-// Login
+// LOGIN
 // ======================
 client.login(process.env.DISCORD_TOKEN);
