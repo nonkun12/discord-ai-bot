@@ -2,709 +2,6 @@ require("dotenv").config();
 
 const express = require("express");
 const axios = require("axios");
-
-const {
-  Client,
-  GatewayIntentBits,
-  Events,
-} = require("discord.js");
-
-
-// ======================
-// Render用 Webサーバー
-// ======================
-
-const app = express();
-
-const PORT = process.env.PORT || 3000;
-
-app.get("/", (req, res) => {
-  res.send("Discord AI Bot running");
-});
-
-app.listen(PORT, () => {
-  console.log(`Web server running on port ${PORT}`);
-});
-
-
-// ======================
-// Discord Bot設定
-// ======================
-
-const client = new Client({
-
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ]
-
-});
-
-
-// ======================
-// 起動確認
-// ======================
-
-client.once(Events.ClientReady, () => {
-
-  console.log(
-    `ログイン成功: ${client.user.tag}`
-  );
-
-});
-
-
-// ======================
-// メッセージ処理
-// ======================
-
-client.on(
-  Events.MessageCreate,
-  async (message) => {
-
-
-    try {
-
-      // Bot自身は無視
-      if (message.author.bot) return;
-
-
-      console.log(
-        "受信:",
-        message.content
-      );
-
-
-      // ======================
-      // 判定
-      // ======================
-
-      const mention =
-        message.mentions.users.has(
-          client.user.id
-        );
-
-
-      const command =
-        message.content
-          .toLowerCase()
-          .startsWith("!ai");
-
-
-      console.log(
-        "メンション:",
-        mention,
-        "コマンド:",
-        command
-      );
-
-
-      if (!mention && !command) {
-        return;
-      }
-
-
-
-      // ======================
-      // 内容取得
-      // ======================
-
-      let userText =
-        message.content;
-
-
-
-      // Discordメンション削除
-      userText =
-        userText.replace(
-          /<@!?[0-9]+>/g,
-          ""
-        )
-        .trim();
-
-
-
-      // !ai削除
-      userText =
-        userText.replace(
-          /^!ai\s*/i,
-          ""
-        )
-        .trim();
-
-
-
-      if (!userText) {
-
-        userText = "こんにちは";
-
-      }
-
-
-
-      console.log(
-        "AIへ送信:",
-        userText
-      );
-
-
-
-      // ======================
-      // Groq API
-      // ======================
-
-      const response =
-        await axios.post(
-
-          "https://api.groq.com/openai/v1/chat/completions",
-
-          {
-
-            model:
-              "llama-3.3-70b-versatile",
-
-            messages: [
-
-              {
-                role: "system",
-                content:
-                  "あなたは親切なAIアシスタントです。"
-              },
-
-              {
-                role: "user",
-                content:
-                  userText
-              }
-
-            ],
-
-            temperature: 0.7
-
-          },
-
-
-          {
-
-            headers: {
-
-              Authorization:
-                `Bearer ${process.env.GROQ_API_KEY}`,
-
-              "Content-Type":
-                "application/json"
-
-            },
-
-
-            timeout:
-              15000
-
-          }
-
-        );
-
-
-
-      let reply =
-        response.data
-          ?.choices?.[0]
-          ?.message?.content
-          ||
-        "回答を取得できませんでした";
-
-
-
-      // Discord文字数制限
-      if (reply.length > 1900) {
-
-        reply =
-          reply.substring(0,1900)
-          + "...";
-
-      }
-
-
-
-      await message.reply(reply);
-
-
-
-    }
-
-    catch(error){
-
-
-      console.error(
-        "ERROR:",
-        error.response?.data
-        ||
-        error.message
-      );require("dotenv").config();
-
-const express = require("express");
-const axios = require("axios");
-
-const {
-  Client,
-  GatewayIntentBits,
-  Events,
-} = require("discord.js");
-
-
-// ======================
-// Node.js エラー防止
-// ======================
-
-process.on("uncaughtException", (err) => {
-  console.error("未処理エラー:", err);
-});
-
-
-process.on("unhandledRejection", (err) => {
-  console.error("Promiseエラー:", err);
-});
-
-
-// ======================
-// Render Web Server
-// ======================
-
-const app = express();
-
-const PORT = process.env.PORT || 3000;
-
-
-app.get("/", (req, res) => {
-
-  res.send(
-    "Discord AI Bot running"
-  );
-
-});
-
-
-app.listen(PORT, () => {
-
-  console.log(
-    `Web server running on port ${PORT}`
-  );
-
-});
-
-
-// ======================
-// Render Keep Alive
-// ======================
-
-setInterval(() => {
-
-  console.log(
-    "Bot alive",
-    new Date().toISOString()
-  );
-
-}, 60000);
-
-
-
-// ======================
-// Discord Client
-// ======================
-
-const client = new Client({
-
-  intents: [
-
-    GatewayIntentBits.Guilds,
-
-    GatewayIntentBits.GuildMessages,
-
-    GatewayIntentBits.MessageContent,
-
-  ]
-
-});
-
-
-
-// ======================
-// Discord Error監視
-// ======================
-
-client.on(
-  "error",
-  (error) => {
-
-    console.error(
-      "Discord Error:",
-      error
-    );
-
-  }
-);
-
-
-client.on(
-  "shardError",
-  (error) => {
-
-    console.error(
-      "Shard Error:",
-      error
-    );
-
-  }
-);
-
-
-client.on(
-  "shardDisconnect",
-  (event) => {
-
-    console.log(
-      "Discord切断:",
-      event.code
-    );
-
-  }
-);
-
-
-client.on(
-  "shardReconnecting",
-  () => {
-
-    console.log(
-      "Discord再接続中..."
-    );
-
-  }
-);
-
-
-client.on(
-  "invalidated",
-  () => {
-
-    console.log(
-      "Discord Session invalidated"
-    );
-
-  }
-);
-
-
-
-// ======================
-// Ready
-// ======================
-
-client.once(
-  Events.ClientReady,
-  () => {
-
-    console.log(
-      `ログイン成功: ${client.user.tag}`
-    );
-
-  }
-);
-
-
-
-// ======================
-// Message Handler
-// ======================
-
-client.on(
-  Events.MessageCreate,
-
-  async (message) => {
-
-
-    try {
-
-
-      if(message.author.bot)
-        return;
-
-
-
-      console.log(
-        "受信:",
-        message.content
-      );
-
-
-
-      const mention =
-        message.mentions.users.has(
-          client.user.id
-        );
-
-
-      const command =
-        message.content
-        .toLowerCase()
-        .startsWith("!ai");
-
-
-
-      console.log(
-        "メンション:",
-        mention,
-        "コマンド:",
-        command
-      );
-
-
-
-      if(!mention && !command)
-        return;
-
-
-
-      let userText =
-        message.content;
-
-
-
-      // メンション削除
-
-      userText =
-        userText.replace(
-          /<@!?[0-9]+>/g,
-          ""
-        );
-
-
-
-      // !ai削除
-
-      userText =
-        userText.replace(
-          /^!ai\s*/i,
-          ""
-        )
-        .trim();
-
-
-
-      if(!userText){
-
-        userText =
-          "こんにちは";
-
-      }
-
-
-
-      console.log(
-        "AI送信:",
-        userText
-      );
-
-
-
-      // ======================
-      // Groq API
-      // ======================
-
-      const response =
-        await axios.post(
-
-          "https://api.groq.com/openai/v1/chat/completions",
-
-          {
-
-            model:
-              "llama-3.3-70b-versatile",
-
-
-            messages:[
-
-              {
-
-                role:"system",
-
-                content:
-                "あなたは親切なAIアシスタントです。"
-
-              },
-
-
-              {
-
-                role:"user",
-
-                content:userText
-
-              }
-
-            ],
-
-
-            temperature:0.7
-
-          },
-
-
-          {
-
-            headers:{
-
-
-              Authorization:
-              `Bearer ${process.env.GROQ_API_KEY}`,
-
-
-              "Content-Type":
-              "application/json"
-
-            },
-
-
-            timeout:15000
-
-          }
-
-        );
-
-
-
-      let reply =
-
-        response.data
-        ?.choices?.[0]
-        ?.message?.content
-        ||
-        "回答できませんでした";
-
-
-
-
-      if(reply.length > 1900){
-
-        reply =
-        reply.substring(0,1900)
-        +"...";
-
-      }
-
-
-
-      await message.reply(reply);
-
-
-
-    }
-
-    catch(error){
-
-
-      console.error(
-
-        "ERROR:",
-        error.response?.data
-        ||
-        error.message
-
-      );
-
-
-
-      try{
-
-
-        await message.reply(
-
-          "現在AI処理でエラーが発生しました"
-
-        );
-
-
-      }
-      catch(e){}
-
-
-
-    }
-
-
-  }
-
-);
-
-
-
-// ======================
-// Discord Login
-// ======================
-
-
-async function startBot(){
-
-
-  try{
-
-
-    await client.login(
-      process.env.DISCORD_TOKEN
-    );
-
-
-    console.log(
-      "Discord接続完了"
-    );
-
-
-  }
-
-
-  catch(error){
-
-
-    console.error(
-      "ログイン失敗:",
-      error.message
-    );
-
-
-    setTimeout(
-
-      startBot,
-
-      10000
-
-    );
-
-
-  }
-
-
-}
-
-
-startBot();
-
-
-
-// ======================
-// Render停止対応
-// ======================
-
-process.on(
-  "SIGTERM",
-  ()=>{
-
-    console.log(
-      "Render停止要求"
-    );require("dotenv").config();
-
-const express = require("express");
-const axios = require("axios");
 const sqlite3 = require("sqlite3").verbose();
 
 const {
@@ -715,22 +12,22 @@ const {
 
 
 // ======================
-// エラー防止
+// エラー対策
 // ======================
 
-process.on("uncaughtException", (err)=>{
-  console.error("Uncaught Exception:", err);
+process.on("uncaughtException", err=>{
+ console.error(err);
 });
 
 
-process.on("unhandledRejection",(err)=>{
-  console.error("Unhandled Rejection:", err);
+process.on("unhandledRejection", err=>{
+ console.error(err);
 });
 
 
 
 // ======================
-// Render Web Server
+// Render Web
 // ======================
 
 const app = express();
@@ -740,33 +37,24 @@ process.env.PORT || 3000;
 
 
 app.get("/",(req,res)=>{
-
-  res.send(
-    "Discord AI Bot running"
-  );
-
+ res.send("Discord AI Bot running");
 });
 
 
 app.listen(PORT,()=>{
-
  console.log(
-  `Web server running on ${PORT}`
+  `Web server ${PORT}`
  );
-
 });
 
 
-
-// ======================
-// Render Keep Alive
-// ======================
+// Render監視
 
 setInterval(()=>{
 
  console.log(
-  "Bot alive",
-  new Date().toISOString()
+  "alive",
+  new Date()
  );
 
 },60000);
@@ -775,16 +63,18 @@ setInterval(()=>{
 
 
 // ======================
-// SQLite Memory
+// SQLite
 // ======================
 
 
 const db =
 new sqlite3.Database(
- "conversation.db"
+ "memory.db"
 );
 
 
+
+// 会話履歴
 
 db.run(`
 
@@ -793,8 +83,6 @@ CREATE TABLE IF NOT EXISTS chats(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 
 user_id TEXT,
-
-username TEXT,
 
 message TEXT,
 
@@ -809,8 +97,29 @@ created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 
 
 
+// 長期記憶
+
+db.run(`
+
+CREATE TABLE IF NOT EXISTS memories(
+
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+user_id TEXT,
+
+key TEXT,
+
+value TEXT
+
+)
+
+`);
+
+
+
+
 // ======================
-// Discord Client
+// Discord
 // ======================
 
 
@@ -818,11 +127,11 @@ const client = new Client({
 
  intents:[
 
-  GatewayIntentBits.Guilds,
+ GatewayIntentBits.Guilds,
 
-  GatewayIntentBits.GuildMessages,
+ GatewayIntentBits.GuildMessages,
 
-  GatewayIntentBits.MessageContent
+ GatewayIntentBits.MessageContent
 
  ]
 
@@ -832,146 +141,16 @@ const client = new Client({
 
 
 // ======================
-// Discord監視
+// Memory関数
 // ======================
 
 
-client.on(
-"error",
-(error)=>{
+// 記憶保存
 
- console.error(
- "Discord Error:",
- error
- );
-
-});
-
-
-client.on(
-"shardError",
-(error)=>{
-
- console.error(
- "Shard Error:",
- error
- );
-
-});
-
-
-client.on(
-"shardDisconnect",
-(event)=>{
-
- console.log(
- "Discord切断:",
- event.code
- );
-
-});
-
-
-client.on(
-"shardReconnecting",
-()=>{
-
- console.log(
- "Discord再接続中"
- );
-
-});
-
-
-
-
-// ======================
-// 起動
-// ======================
-
-
-client.once(
-Events.ClientReady,
-()=>{
-
- console.log(
- `ログイン成功: ${client.user.tag}`
- );
-
-});
-
-
-
-
-// ======================
-// 会話履歴取得
-// ======================
-
-
-function getHistory(userId){
-
-
- return new Promise((resolve)=>{
-
-
-  db.all(
-
-  `
-
-  SELECT message,reply
-  FROM chats
-  WHERE user_id=?
-  ORDER BY id DESC
-  LIMIT 5
-
-  `,
-
-  [
-   userId
-  ],
-
-
-  (err,rows)=>{
-
-
-   if(err){
-
-    console.error(err);
-
-    resolve([]);
-
-   }
-
-   else{
-
-    resolve(
-     rows.reverse()
-    );
-
-   }
-
-
-  });
-
-
- });
-
-
-}
-
-
-
-
-// ======================
-// 会話保存
-// ======================
-
-
-function saveChat(
+function saveMemory(
 userId,
-username,
-message,
-reply
+key,
+value
 ){
 
 
@@ -979,32 +158,21 @@ reply
 
  `
 
- INSERT INTO chats
-
+ INSERT INTO memories
  (
  user_id,
- username,
- message,
- reply
+ key,
+ value
  )
-
- VALUES(?,?,?,?)
+ VALUES(?,?,?)
 
  `,
 
-
  [
-
  userId,
-
- username,
-
- message,
-
- reply
-
+ key,
+ value
  ]
-
 
  );
 
@@ -1013,9 +181,196 @@ reply
 
 
 
+// 記憶取得
+
+function getMemory(userId){
+
+
+return new Promise(resolve=>{
+
+
+db.all(
+
+`
+
+SELECT key,value
+FROM memories
+WHERE user_id=?
+
+`,
+
+[
+userId
+],
+
+
+(err,rows)=>{
+
+
+if(err){
+
+resolve([]);
+
+}
+
+else{
+
+resolve(rows);
+
+}
+
+
+});
+
+
+});
+
+
+}
+
+
+
+// 会話取得
+
+function getHistory(userId){
+
+
+return new Promise(resolve=>{
+
+
+db.all(
+
+`
+
+SELECT message,reply
+FROM chats
+WHERE user_id=?
+
+ORDER BY id DESC
+
+LIMIT 5
+
+`,
+
+[
+userId
+],
+
+
+(err,rows)=>{
+
+
+if(err)
+resolve([]);
+
+else
+resolve(
+rows.reverse()
+);
+
+
+});
+
+
+});
+
+
+}
+
+
+
+// 会話保存
+
+function saveChat(
+userId,
+message,
+reply
+){
+
+
+db.run(
+
+`
+
+INSERT INTO chats
+(
+user_id,
+message,
+reply
+)
+
+VALUES(?,?,?)
+
+`,
+
+[
+userId,
+message,
+reply
+]
+
+);
+
+
+}
+
+
+
+
 
 // ======================
-// Discord Message
+// Ready
+// ======================
+
+
+client.once(
+Events.ClientReady,
+()=>{
+
+console.log(
+"ログイン:",
+client.user.tag
+);
+
+});
+
+
+
+
+// ======================
+// Discord Error
+// ======================
+
+
+client.on(
+"error",
+console.error
+);
+
+
+client.on(
+"shardDisconnect",
+()=>{
+console.log(
+"Discord切断"
+);
+});
+
+
+client.on(
+"shardReconnecting",
+()=>{
+console.log(
+"再接続中"
+);
+});
+
+
+
+
+
+// ======================
+// Message
 // ======================
 
 
@@ -1024,27 +379,16 @@ client.on(
 Events.MessageCreate,
 
 
-async(message)=>{
+async message=>{
 
 
 try{
 
 
-// Bot無視
-
 if(message.author.bot)
 return;
 
 
-
-console.log(
-"受信:",
-message.content
-);
-
-
-
-// メンション判定
 
 const mention =
 
@@ -1053,8 +397,6 @@ client.user.id
 );
 
 
-
-// !ai判定
 
 const command =
 
@@ -1069,33 +411,20 @@ return;
 
 
 
-
-// ======================
-// 入力整理
-// ======================
-
-
-let userText =
+let text =
 message.content;
 
 
 
-// メンション削除
-
-userText =
-
-userText.replace(
+text =
+text.replace(
 /<@!?[0-9]+>/g,
 ""
 );
 
 
-
-// !ai削除
-
-userText =
-
-userText.replace(
+text =
+text.replace(
 /^!ai\s*/i,
 ""
 )
@@ -1103,17 +432,114 @@ userText.replace(
 
 
 
-if(!userText){
+if(!text)
+text="こんにちは";
 
- userText="こんにちは";
+
+
+
+
+// ======================
+// 長期記憶登録
+// ======================
+
+
+let memoryMatch =
+
+text.match(
+/私の名前は(.+?)(です|だよ|です。)?$/
+);
+
+
+
+if(memoryMatch){
+
+
+let name =
+
+memoryMatch[1]
+.trim();
+
+
+saveMemory(
+
+message.author.id,
+
+"name",
+
+name
+
+);
+
+
+await message.reply(
+
+`${name}さんですね。覚えました。`
+
+);
+
+
+return;
 
 }
 
 
 
+
+
+// 覚えてコマンド
+
+
+if(
+text.startsWith("覚えて")
+){
+
+
+let data =
+
+text.replace(
+"覚えて",
+""
+)
+.trim();
+
+
+saveMemory(
+
+message.author.id,
+
+"info",
+
+data
+
+);
+
+
+await message.reply(
+
+"覚えました。"
+
+);
+
+
+return;
+
+}
+
+
+
+
+
 // ======================
-// 過去記憶取得
+// Memory取得
 // ======================
+
+
+const memories =
+
+await getMemory(
+message.author.id
+);
 
 
 const history =
@@ -1125,12 +551,11 @@ message.author.id
 
 
 
-// ======================
-// Groqへ送信
-// ======================
+
+// AIメッセージ作成
 
 
-const messages = [
+let messages=[
 
 
 {
@@ -1139,7 +564,17 @@ role:"system",
 
 content:
 
-"あなたは親切なAIアシスタントです。過去の会話履歴を参考にしてください。"
+`
+あなたは親切なAIアシスタントです。
+
+ユーザーの記憶:
+${JSON.stringify(memories)}
+
+過去会話:
+${JSON.stringify(history)}
+
+記憶を参考に回答してください。
+`
 
 }
 
@@ -1147,17 +582,15 @@ content:
 
 
 
-// 過去会話追加
 
-history.forEach(chat=>{
+history.forEach(h=>{
 
 
 messages.push({
 
 role:"user",
 
-content:
-chat.message
+content:h.message
 
 });
 
@@ -1166,8 +599,7 @@ messages.push({
 
 role:"assistant",
 
-content:
-chat.reply
+content:h.reply
 
 });
 
@@ -1176,19 +608,22 @@ chat.reply
 
 
 
-// 今回質問
 
 messages.push({
 
 role:"user",
 
-content:
-userText
+content:text
 
 });
 
 
 
+
+
+// ======================
+// Groq
+// ======================
 
 
 const response =
@@ -1206,7 +641,7 @@ model:
 "llama-3.3-70b-versatile",
 
 
-messages:messages,
+messages,
 
 
 temperature:0.7
@@ -1217,32 +652,24 @@ temperature:0.7
 
 {
 
-
 headers:{
-
 
 Authorization:
 
 `Bearer ${process.env.GROQ_API_KEY}`,
 
-
 "Content-Type":
 
 "application/json"
-
 
 },
 
 
 timeout:15000
 
-
 }
 
-
-
 );
-
 
 
 
@@ -1255,50 +682,36 @@ response.data
 ?.content
 
 ||
-
-"回答できませんでした";
-
+"回答できません";
 
 
 
 
-// Discord制限
 
 if(reply.length>1900){
 
- reply =
-
- reply.substring(0,1900)
- +"...";
+reply =
+reply.substring(0,1900)
++"...";
 
 }
 
 
 
-// ======================
-// Discord返信
-// ======================
 
 
-await message.reply(
-reply
-);
+await message.reply(reply);
 
 
 
 
-// ======================
 // 保存
-// ======================
-
 
 saveChat(
 
 message.author.id,
 
-message.author.username,
-
-userText,
+text,
 
 reply
 
@@ -1308,39 +721,17 @@ reply
 
 }
 
-
 catch(error){
 
 
 console.error(
-
-"ERROR:",
-
 error.response?.data
 ||
 error.message
-
-);
-
-
-
-try{
-
-
-await message.reply(
-
-"AI処理中にエラーが発生しました"
-
 );
 
 
 }
-catch(e){}
-
-
-
-}
-
 
 });
 
@@ -1349,124 +740,53 @@ catch(e){}
 
 
 
-
 // ======================
-// Bot起動
+// Login
 // ======================
 
 
-async function startBot(){
+async function start(){
 
 
 try{
 
-
 await client.login(
-
 process.env.DISCORD_TOKEN
-
 );
-
-
-console.log(
-"Discord接続完了"
-);
-
 
 }
 
-catch(error){
+catch(e){
 
-
-console.error(
-
-"ログイン失敗:",
-error.message
-
-);
-
+console.error(e);
 
 setTimeout(
-
-startBot,
-
+start,
 10000
-
 );
 
-
 }
 
 
 }
 
 
-
-startBot();
-
+start();
 
 
 
 
 // ======================
-// Render停止処理
+// Render停止
 // ======================
 
 
 process.on(
-
 "SIGTERM",
-
 ()=>{
-
-
-console.log(
-"Render停止"
-);
-
 
 client.destroy();
 
-
 process.exit(0);
 
-
-}
-
-);
-
-
-    client.destroy();
-
-    process.exit(0);
-
-  }
-);
-
-
-      try {
-
-        await message.reply(
-          "エラーが発生しました"
-        );
-
-      }
-
-      catch(e){}
-
-    }
-
-
-  }
-
-);
-
-
-
-// ======================
-// Discordログイン
-// ======================
-
-client.login(
-  process.env.DISCORD_TOKEN
-);
+});
