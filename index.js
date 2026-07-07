@@ -538,7 +538,22 @@ await getMemory(
  message.author.id
 );
 
+if (
+    text === "私の名前は？" ||
+    text === "私の名前は?" ||
+    text === "私の名前は"
+) {
 
+    const memories = await getMemory(message.author.id);
+
+    if (memories && memories.name) {
+        await message.reply(`あなたの名前は${memories.name}です。`);
+    } else {
+        await message.reply("まだ名前を覚えていません。");
+    }
+
+    return;
+}
 
 const history =
 await getHistory(
