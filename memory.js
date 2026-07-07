@@ -7,7 +7,20 @@ const sqlite3 = require("sqlite3").verbose();
 
 const db =
 new sqlite3.Database(
- "memory.db"
+ "memory.db",
+ err => {
+
+  if(err){
+
+   console.error(
+    "SQLite Error:",
+    err
+   );
+
+  }
+
+ }
+
 );
 
 
@@ -16,90 +29,84 @@ new sqlite3.Database(
 // 記憶保存
 // ===============================
 
-
 function saveMemory(
  userId,
  key,
  value
 ){
 
-return new Promise(
-(resolve,reject)=>{
+ return new Promise(
+  (resolve,reject)=>{
 
 
-db.run(
+   db.run(
 
-`
+    `
+    INSERT INTO memories
+    (
+      user_id,
+      key,
+      value
+    )
 
-INSERT INTO memories
+    VALUES(?,?,?)
 
-(
- user_id,
- key,
- value
-)
+    ON CONFLICT(user_id,key)
 
-VALUES(?,?,?)
+    DO UPDATE SET
 
-ON CONFLICT(user_id,key)
+    value=excluded.value
 
-DO UPDATE SET
+    `,
 
-value=excluded.value
-
-`,
-
-[
-
-userId,
-
-key,
-
-value
-
-],
+    [
+     userId,
+     key,
+     value
+    ],
 
 
-err=>{
+    function(err){
 
 
-if(err){
+     if(err){
 
-console.error(
-"Memory save error:",
-if(err){
+      console.error(
+       "Memory save error:",
+       err
+      );
 
- console.error(
-  "Memory save error:",
-  err
+
+      reject(err);
+
+
+     }
+     else{
+
+
+      console.log(
+       "Memory saved:",
+       userId,
+       key,
+       value
+      );
+
+
+      resolve();
+
+
+     }
+
+
+    }
+
+
+   );
+
+
+  }
+
  );
-
- reject(err);
-
-}
-else{
-
- console.log(
-  "Memory saved:",
-  userId,
-  key,
-  value
- );
-
- resolve();
-
-}
-
-
-}
-
-
-);
-
-
-}
-
-);
 
 
 }
@@ -112,79 +119,68 @@ else{
 // 記憶取得
 // ===============================
 
-
 function getMemory(
  userId
 ){
 
-return new Promise(
-(resolve)=>{
+ return new Promise(
+  (resolve)=>{
 
 
-db.all(
+   db.all(
 
-`
+    `
+    SELECT
 
-SELECT
+    key,
 
-key,
+    value
 
-value
+    FROM memories
 
-FROM memories
+    WHERE user_id=?
 
+    ORDER BY id ASC
 
-WHERE user_id=?
+    `,
 
-
-ORDER BY id ASC
-
-
-`,
-
-[
-
-userId
-
-],
+    [
+     userId
+    ],
 
 
-(err,rows)=>{
+    (err,rows)=>{
 
 
-if(err){
+     if(err){
+
+      console.error(
+       "Memory get error:",
+       err
+      );
 
 
-console.error(
-"Memory get error:",
-err
-);
+      resolve([]);
+
+     }
+     else{
+
+      resolve(
+       rows
+      );
+
+     }
 
 
-resolve([]);
+    }
 
 
-}
-
-else{
+   );
 
 
-resolve(rows);
+  }
 
-
-}
-
-
-}
-
-
-);
-
-
-}
-
-);
-
+ );
 
 }
 
@@ -195,71 +191,62 @@ resolve(rows);
 // 名前取得
 // ===============================
 
-
 function findName(
  userId
 ){
 
-return new Promise(
-(resolve)=>{
+ return new Promise(
+  (resolve)=>{
 
 
-db.get(
+   db.get(
 
-`
+    `
+    SELECT
 
-SELECT
+    value
 
-value
+    FROM memories
 
-FROM memories
+    WHERE user_id=?
 
+    AND key='name'
 
-WHERE user_id=?
+    LIMIT 1
 
+    `,
 
-AND key='name'
-
-
-LIMIT 1
-
-`,
-
-[
-
-userId
-
-],
+    [
+     userId
+    ],
 
 
-(err,row)=>{
+    (err,row)=>{
 
 
-if(err || !row){
+     if(err || !row){
 
-resolve(null);
+      resolve(null);
 
-}
+     }
+     else{
 
-else{
+      resolve(
+       row.value
+      );
 
-resolve(
-row.value
-);
-
-}
-
-
-}
+     }
 
 
-);
+    }
 
 
-}
+   );
 
-);
 
+  }
+
+ );
 
 }
 
@@ -271,66 +258,56 @@ row.value
 // 記憶削除
 // ===============================
 
-
 function deleteMemory(
  userId,
  key
 ){
 
-return new Promise(
-(resolve,reject)=>{
+ return new Promise(
+  (resolve,reject)=>{
 
 
-db.run(
+   db.run(
 
-`
+    `
+    DELETE FROM memories
 
-DELETE FROM memories
+    WHERE user_id=?
 
+    AND key=?
 
-WHERE user_id=?
+    `,
 
-
-AND key=?
-
-
-`,
-
-[
-
-userId,
-
-key
-
-],
+    [
+     userId,
+     key
+    ],
 
 
-err=>{
+    err=>{
 
 
-if(err){
+     if(err){
 
-reject(err);
+      reject(err);
 
-}
+     }
+     else{
 
-else{
+      resolve();
 
-resolve();
-
-}
-
-
-}
+     }
 
 
-);
+    }
 
 
-}
+   );
 
-);
 
+  }
+
+ );
 
 }
 
@@ -339,63 +316,55 @@ resolve();
 
 
 // ===============================
-// 全削除
+// 全記憶削除
 // ===============================
-
 
 function clearMemory(
  userId
 ){
 
-return new Promise(
-(resolve,reject)=>{
+ return new Promise(
+  (resolve,reject)=>{
 
 
-db.run(
+   db.run(
 
-`
+    `
+    DELETE FROM memories
 
-DELETE FROM memories
+    WHERE user_id=?
 
+    `,
 
-WHERE user_id=?
-
-
-`,
-
-[
-
-userId
-
-],
+    [
+     userId
+    ],
 
 
-err=>{
+    err=>{
 
 
-if(err){
+     if(err){
 
-reject(err);
+      reject(err);
 
-}
+     }
+     else{
 
-else{
+      resolve();
 
-resolve();
-
-}
-
-
-}
+     }
 
 
-);
+    }
 
 
-}
+   );
 
-);
 
+  }
+
+ );
 
 }
 
@@ -403,18 +372,16 @@ resolve();
 
 
 
-module.exports={
+module.exports = {
 
+ saveMemory,
 
-saveMemory,
+ getMemory,
 
-getMemory,
+ findName,
 
-findName,
+ deleteMemory,
 
-deleteMemory,
-
-clearMemory
-
+ clearMemory
 
 };
