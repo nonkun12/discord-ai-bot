@@ -455,7 +455,15 @@ const nameMatch =
 text.match(
 /私の名前は(.+?)(です|だよ|です。)?$/
 );
+console.log(
+"受信:",
+text
+);
 
+console.log(
+"nameMatch:",
+nameMatch
+);
 
 
 if(nameMatch){

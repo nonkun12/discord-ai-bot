@@ -67,19 +67,26 @@ if(err){
 
 console.error(
 "Memory save error:",
-err
-);
+if(err){
 
+ console.error(
+  "Memory save error:",
+  err
+ );
 
-reject(err);
-
+ reject(err);
 
 }
 else{
 
+ console.log(
+  "Memory saved:",
+  userId,
+  key,
+  value
+ );
 
-resolve();
-
+ resolve();
 
 }
 
