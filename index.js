@@ -10,6 +10,10 @@ const {
   Events,
 } = require("discord.js");
 
+const botStatus = {
+ discordReady:false
+};
+
 
 // ======================
 // エラー対策
@@ -17,12 +21,31 @@ const {
 
 process.on("uncaughtException", err=>{
  console.error(err);
+ process.exit(1);
 });
 
 
 process.on("unhandledRejection", err=>{
  console.error(err);
 });
+
+
+const requiredEnv = [
+ "DISCORD_TOKEN",
+ "GROQ_API_KEY"
+];
+
+const missingEnv =
+requiredEnv.filter(
+ key=>!process.env[key]
+);
+
+if(missingEnv.length){
+ console.error(
+  `Missing env: ${missingEnv.join(", ")}`
+ );
+ process.exit(1);
+}
 
 
 
@@ -40,11 +63,25 @@ app.get("/",(req,res)=>{
  res.send("Discord AI Bot running");
 });
 
+app.get("/health",(req,res)=>{
+ res.json({
+  ok:true,
+  discord:botStatus.discordReady,
+  uptime:process.uptime()
+ });
+});
 
+
+const server =
 app.listen(PORT,()=>{
  console.log(
   `Web server ${PORT}`
  );
+});
+
+server.on("error",err=>{
+ console.error("Web server error:",err);
+ process.exit(1);
 });
 
 
@@ -58,6 +95,26 @@ setInterval(()=>{
  );
 
 },60000);
+
+if(process.env.SELF_URL){
+
+ setInterval(async()=>{
+  try{
+   await axios.get(
+    `${process.env.SELF_URL.replace(/\/$/,"")}/health`,
+    {timeout:10000}
+   );
+   console.log("self ping ok");
+  }
+  catch(err){
+   console.error(
+    "self ping failed:",
+    err.message
+   );
+  }
+ },600000);
+
+}
 
 
 
@@ -327,6 +384,8 @@ client.once(
 Events.ClientReady,
 ()=>{
 
+botStatus.discordReady = true;
+
 console.log(
 "ログイン:",
 client.user.tag
@@ -344,15 +403,29 @@ client.user.tag
 
 client.on(
 "error",
-console.error
+err=>{
+ console.error("Discord client error:",err);
+}
+);
+
+
+client.on(
+"shardError",
+err=>{
+ console.error("Discord shard error:",err);
+}
 );
 
 
 client.on(
 "shardDisconnect",
-()=>{
+event=>{
+botStatus.discordReady = false;
+
 console.log(
-"Discord切断"
+"Discord切断",
+event?.code,
+event?.reason || ""
 );
 });
 
@@ -360,10 +433,24 @@ console.log(
 client.on(
 "shardReconnecting",
 ()=>{
+botStatus.discordReady = false;
+
 console.log(
 "再接続中"
 );
 });
+
+
+client.on(
+"shardResume",
+()=>{
+botStatus.discordReady = true;
+
+console.log(
+"Discord再接続完了"
+);
+}
+);
 
 
 
@@ -750,6 +837,10 @@ async function start(){
 
 try{
 
+if(client.isReady()){
+ return;
+}
+
 await client.login(
 process.env.DISCORD_TOKEN
 );
@@ -787,6 +878,10 @@ process.on(
 
 client.destroy();
 
-process.exit(0);
+server.close(()=>{
+ db.close(()=>{
+  process.exit(0);
+ });
+});
 
 });
