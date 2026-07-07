@@ -1,18 +1,19 @@
 {
   "name": "discord-ai-bot",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "Discord AI Bot using Groq with SQLite memory",
   "main": "index.js",
-  "engines": {
-    "node": "20.x"
-  },
   "scripts": {
     "start": "node index.js"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
-    "axios": "^1.6.0",
-    "discord.js": "^14.16.0",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "axios": "^1.18.1",
+    "discord.js": "^14.26.4",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
     "sqlite3": "^5.1.7"
   }
 }
