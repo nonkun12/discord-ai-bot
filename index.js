@@ -16,9 +16,10 @@ const {
 } = require("./database");
 
 const {
-  saveMemory,
-  getMemory,
-  findName
+ saveMemory,
+ getMemory,
+ findName,
+ deleteMemory
 } = require("./memory");
 
 
