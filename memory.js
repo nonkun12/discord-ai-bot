@@ -191,63 +191,31 @@ function getMemory(
 // 名前取得
 // ===============================
 
-function findName(
- userId
-){
+function findName(userId) {
+  return new Promise((resolve) => {
+    console.log("findName userId =", userId);
 
- return new Promise(
-  (resolve)=>{
+    db.get(
+      `
+      SELECT value
+      FROM memories
+      WHERE user_id = ?
+      AND key = 'name'
+      LIMIT 1
+      `,
+      [userId],
+      (err, row) => {
+        console.log("findName row =", row);
 
-
-   db.get(
-
-    `
-    SELECT
-
-    value
-
-    FROM memories
-
-    WHERE user_id=?
-
-    AND key='name'
-
-    LIMIT 1
-
-    `,
-
-    [
-     userId
-    ],
-
-
-    (err,row)=>{
-
-
-     if(err || !row){
-
-      resolve(null);
-
-     }
-     else{
-
-      resolve(
-       row.value
-      );
-
-     }
-
-
-    }
-
-
-   );
-
-
-  }
-
- );
-
+        if (err) {
+          console.error(err);
+          resolve(null);
+        } else {
+          resolve(row ? row.value : null);
+        }
+      }
+    );
+  });
 }
 
 
