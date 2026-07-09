@@ -454,7 +454,7 @@ await message.channel.sendTyping();
 
 const nameMatch =
 text.match(
-/私の名前は([^？?]+?)(です|だよ|です。)?$/
+/私の名前は(.+?)(です|だよ|です。)?$/
 );
 console.log(
 "受信:",
