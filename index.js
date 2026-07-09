@@ -448,10 +448,9 @@ text="こんにちは";
 
 await message.channel.sendTyping();
 
-
+if(nameMatch){
 
 // 名前記憶
-
 const nameMatch =
 text.match(
 /私の名前は\s*([^？?]+?)(です|だよ|です。)?$/
@@ -479,39 +478,7 @@ if(nameMatch){
  return;
 
 }
-console.log(
-"受信:",
-text
-);
 
-console.log(
-"nameMatch:",
-nameMatch
-);
-
-
-if(nameMatch){
-
-
-const name =
-nameMatch[1].trim();
-
-
-await saveMemory(
-message.author.id,
-"name",
-name
-);
-
-
-await message.reply(
-`${name}さんですね。覚えました。`
-);
-
-
-return;
-
-}
 
 // ===============================
 // 「覚えて」コマンド
