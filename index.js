@@ -537,12 +537,10 @@ const memories =
 await getMemory(
  message.author.id
 );
-
 if (
-    text === "私の名前は？" ||
-    text === "私の名前は?" ||
-    text === "私の名前は"
-) {
+    text.includes("私の名前は")
+)
+{
 
     const name = await findName(
         message.author.id
