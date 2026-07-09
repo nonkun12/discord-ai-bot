@@ -456,6 +456,33 @@ const nameMatch =
 text.match(
 /私の名前は(.+?)(です|だよ|です。)?$/
 );
+
+
+if(
+ nameMatch &&
+ nameMatch[1].trim() !== "？" &&
+ nameMatch[1].trim() !== "?"
+){
+
+ const name =
+ nameMatch[1].trim();
+
+
+ await saveMemory(
+  message.author.id,
+  "name",
+  name
+ );
+
+
+ await message.reply(
+  `${name}さんですね。覚えました。`
+ );
+
+
+ return;
+
+}
 console.log(
 "受信:",
 text
