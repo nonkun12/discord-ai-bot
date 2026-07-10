@@ -145,7 +145,6 @@ async function getMemory(
 // ===============================
 // 名前取得（MCP版）
 // ===============================
-
 async function findName(userId) {
 
   try {
@@ -158,8 +157,7 @@ async function findName(userId) {
 
     const result =
     await getMemoryMCP(
-      userId,
-      "name"
+      userId
     );
 
 
@@ -178,7 +176,7 @@ async function findName(userId) {
 
     const match =
     result.match(
-      /"text":"(.*?)"/
+      /"key":"name".*?"value":"(.*?)"/
     );
 
 
@@ -203,11 +201,9 @@ async function findName(userId) {
 
     return null;
 
-
   }
 
 }
-
 
 
 
