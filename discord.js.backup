@@ -78,6 +78,7 @@ Events.MessageCreate,
 
 async message=>{
 
+
 try{
 
 
@@ -321,7 +322,7 @@ await askAI(
 messages
 );
 
-reply = reply.replace(/^[、。,.！!？?\s]+/, "");
+
 
 
 if(reply.length > 1900){

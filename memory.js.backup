@@ -1,10 +1,5 @@
 const sqlite3 = require("sqlite3").verbose();
 
-const {
-    saveMemoryMCP,
-    getMemoryMCP
-} = require("./mcp-client");
-
 
 // ===============================
 // SQLite接続
@@ -31,57 +26,88 @@ new sqlite3.Database(
 
 
 // ===============================
-// 記憶保存（MCP版）
+// 記憶保存
 // ===============================
 
-async function saveMemory(
+function saveMemory(
  userId,
  key,
  value
 ){
 
- try {
+ return new Promise(
+  (resolve,reject)=>{
 
 
-  console.log(
-   "Memory MCP save:",
-   userId,
-   key,
-   value
-  );
+   db.run(
+
+    `
+    INSERT INTO memories
+    (
+      user_id,
+      key,
+      value
+    )
+
+    VALUES(?,?,?)
+
+    ON CONFLICT(user_id,key)
+
+    DO UPDATE SET
+
+    value=excluded.value
+
+    `,
+
+    [
+     userId,
+     key,
+     value
+    ],
 
 
-  const result =
-  await saveMemoryMCP(
-   userId,
-   key,
-   value
-  );
+    function(err){
 
 
-  console.log(
-   "Memory MCP save result:",
-   result
-  );
+     if(err){
+
+      console.error(
+       "Memory save error:",
+       err
+      );
 
 
-  return result;
+      reject(err);
 
 
- }
- catch(error){
+     }
+     else{
 
 
-  console.error(
-   "Memory MCP save error:",
-   error
-  );
+      console.log(
+       "Memory saved:",
+       userId,
+       key,
+       value
+      );
 
 
-  return null;
+      resolve();
 
 
- }
+     }
+
+
+    }
+
+
+   );
+
+
+  }
+
+ );
+
 
 }
 
@@ -90,57 +116,80 @@ async function saveMemory(
 
 
 // ===============================
-// 記憶取得（MCP版）
+// 記憶取得
 // ===============================
 
-async function getMemory(
+function getMemory(
  userId
 ){
 
- try {
+ return new Promise(
+  (resolve)=>{
 
 
-  console.log(
-   "Memory MCP get:",
-   userId
-  );
+   db.all(
+
+    `
+    SELECT
+
+    key,
+
+    value
+
+    FROM memories
+
+    WHERE user_id=?
+
+    ORDER BY id ASC
+
+    `,
+
+    [
+     userId
+    ],
 
 
-  const result =
-  await getMemoryMCP(
-   userId
-  );
+    (err,rows)=>{
 
 
-  console.log(
-   "Memory MCP get result:",
-   result
-  );
+     if(err){
+
+      console.error(
+       "Memory get error:",
+       err
+      );
 
 
-  return result;
+      resolve([]);
+
+     }
+     else{
+
+      resolve(
+       rows
+      );
+
+     }
 
 
- }
- catch(error){
+    }
 
 
-  console.error(
-   "Memory MCP get error:",
-   error
-  );
+   );
 
 
-  return [];
+  }
 
-
- }
+ );
 
 }
 
 
 
 
+// ===============================
+// 名前取得
+// ===============================
 
 // ===============================
 // 名前取得（MCP版）
@@ -154,6 +203,11 @@ async function findName(userId) {
       "findName MCP userId =",
       userId
     );
+
+
+    const {
+      getMemoryMCP
+    } = require("./mcp-client");
 
 
     const result =
@@ -174,6 +228,24 @@ async function findName(userId) {
       return null;
 
     }
+
+
+    /*
+      MCP返却例
+
+      event: message
+      data:
+      {"result":
+        {"content":
+          [
+            {
+              "type":"text",
+              "text":"太郎"
+            }
+          ]
+        }
+      }
+    */
 
 
     const match =
@@ -207,7 +279,6 @@ async function findName(userId) {
   }
 
 }
-
 
 
 

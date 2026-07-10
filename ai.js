@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const axios = require("axios");
 
+
 /**
  * Groqへ問い合わせ
  * @param {Array} messages
@@ -9,83 +10,158 @@ const axios = require("axios");
  */
 async function askGroq(messages) {
 
+
     for (let i = 0; i < 3; i++) {
+
 
         try {
 
-            const response = await axios.post(
+
+            const response =
+            await axios.post(
+
 
                 "https://api.groq.com/openai/v1/chat/completions",
 
+
                 {
-                    model: "llama-3.3-70b-versatile",
+
+                    model:
+                    "llama-3.3-70b-versatile",
+
 
                     messages,
 
-                    temperature: 0.7
+
+                    temperature:0.7
 
                 },
 
+
                 {
 
-                    headers: {
+                    headers:{
 
-                        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
 
-                        "Content-Type": "application/json"
+                        Authorization:
+                        `Bearer ${process.env.GROQ_API_KEY}`,
+
+
+                        "Content-Type":
+                        "application/json"
+
 
                     },
 
-                    timeout: 30000
+
+                    timeout:30000
+
 
                 }
 
+
             );
 
-            return response.data.choices[0].message.content;
 
-        } catch (err) {
+
+            // ===============================
+            // AI返信取得
+            // ===============================
+
+            let text =
+            response.data.choices[0].message.content;
+
+
+
+            // ===============================
+            // 先頭の不要な記号削除
+            // ===============================
+
+            text =
+            text.replace(
+                /^[、。,.！!？?\s]+/,
+                ""
+            );
+
+
+
+            console.log(
+                "AI CLEAN RESULT:",
+                text
+            );
+
+
+
+            return text;
+
+
+
+        }
+        catch(err){
+
 
             console.error(
+
                 "Groq Error attempt",
                 i + 1,
-                err.response?.data || err.message
+                err.response?.data ||
+                err.message
+
             );
 
-            if (i === 2) {
+
+
+            if(i === 2){
+
                 throw err;
+
             }
 
-            await new Promise(resolve =>
-                setTimeout(resolve, 2000)
+
+
+            await new Promise(
+                resolve =>
+                setTimeout(
+                    resolve,
+                    2000
+                )
             );
+
 
         }
 
+
     }
 
+
 }
+
+
 
 /**
  * AIへ問い合わせ
- * 将来ここへ
- * SQLite
- * Memory
- * MCP
- * などを追加していく
  */
-async function askAI(messages) {
+async function askAI(messages){
 
-    const reply = await askGroq(messages);
+
+    const reply =
+    await askGroq(messages);
+
+
 
     return reply;
 
+
 }
 
+
+
 module.exports = {
+
 
     askGroq,
 
     askAI
+
 
 };
