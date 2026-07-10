@@ -143,7 +143,7 @@ await message.channel.sendTyping();
 
 const nameMatch =
 text.match(
-    /^私の名前は\s*[、,]?\s*(.+?)(です|だよ|です。|だ。|。)?$/
+    /^私の名前(?:は)?\s*[、,]?\s*(.+?)(です|だよ|です。|だ。|。)?$/
 );
 
 
