@@ -145,40 +145,38 @@ await message.channel.sendTyping();
 // 名前確認
 // ===============================
 
-
 if(
-text.includes("私の名前")
+    text === "私の名前は？" ||
+    text === "私の名前は?" ||
+    text === "私の名前"
 ){
 
-
-const name =
-await findName(
-message.author.id
-);
-
+    const name =
+    await findName(
+        message.author.id
+    );
 
 
-if(name){
+    if(name){
 
-await message.reply(
-`あなたの名前は${name}です。`
-);
+        await message.reply(
+            `あなたの名前は${name}です。`
+        );
 
+    }else{
 
-}else{
+        await message.reply(
+            "まだ名前を覚えていません。"
+        );
 
-await message.reply(
-"まだ名前を覚えていません。"
-);
-
-
-}
+    }
 
 
-return;
-
+    return;
 
 }
+
+
 
 // ===============================
 // 名前保存
@@ -186,47 +184,47 @@ return;
 
 const nameMatch =
 text.match(
-    /^私の名前(?:は)?\s*[、,]?\s*(.+?)(です|だよ|です。|だ。|。)?$/
+    /^私の名前(?:は)?[、,\s]*(.+?)(?:です|だよ|だ。|です。|。)?$/
 );
 
 
-if (nameMatch) {
+if(nameMatch){
 
 
     const name =
         nameMatch[1]
-            .trim()
-            .replace(/^[、,\s]+/, "")
-            .replace(/[。！？?]$/, "");
+        .trim()
+        .replace(/^[、,\s]+/, "")
+        .replace(/[。！？?]+$/, "");
 
 
-    // ? や ？だけは保存しない
-    if (
-        name === "" ||
+    if(
+        !name ||
         name === "?" ||
         name === "？"
-    ) {
+    ){
+
         return;
+
     }
 
 
     console.log(
-    "SAVE NAME:",
-    message.author.id,
-    name
-);
+        "SAVE NAME:",
+        message.author.id,
+        name
+    );
 
-await saveMemory(
-    message.author.id,
-    "name",
-    name
-);
+
+    await saveMemory(
+        message.author.id,
+        "name",
+        name
+    );
 
 
     await message.reply(
-
         `${name}さんですね。覚えました。`
-
     );
 
 
