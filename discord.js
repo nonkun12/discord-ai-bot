@@ -210,15 +210,17 @@ if (nameMatch) {
     }
 
 
-    await saveMemory(
+    console.log(
+    "SAVE NAME:",
+    message.author.id,
+    name
+);
 
-        message.author.id,
-
-        "name",
-
-        name
-
-    );
+await saveMemory(
+    message.author.id,
+    "name",
+    name
+);
 
 
     await message.reply(
