@@ -3,7 +3,8 @@ require("dotenv").config();
 const {
     Client,
     GatewayIntentBits,
-    Events
+    Events,
+    Partials
 } = require("discord.js");
 
 const {
@@ -37,7 +38,19 @@ const client = new Client({
 
         GatewayIntentBits.GuildMessages,
 
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+
+        GatewayIntentBits.DirectMessages
+
+    ],
+
+    // DMチャンネルはデフォルトではキャッシュされないため、
+    // Partialsを指定しないとDMのMessageCreateイベントが発火しない
+    partials: [
+
+        Partials.Channel,
+
+        Partials.Message
 
     ]
 
@@ -69,6 +82,38 @@ Events.ClientReady,
 
 
 // ===============================
+// 接続状態の変化をログに残す
+// (オフラインになる原因の切り分け用:
+//  Render側のスピンダウンなのか、
+//  discord.js側の切断なのかを判別できるようにする)
+// ===============================
+
+client.on("shardDisconnect", (event, id) => {
+    botStatus.ready = false;
+    console.error(
+        "Discord Shard Disconnected:",
+        id,
+        event?.code,
+        event?.reason
+    );
+});
+
+client.on("shardReconnecting", (id) => {
+    console.log("Discord Shard Reconnecting:", id);
+});
+
+client.on("shardResume", (id) => {
+    botStatus.ready = true;
+    console.log("Discord Shard Resumed:", id);
+});
+
+client.on("error", (error) => {
+    console.error("Discord Client Error:", error);
+});
+
+
+
+// ===============================
 // Message
 // ===============================
 
@@ -86,6 +131,13 @@ if(message.author.bot)
 return;
 
 
+// --- 一時デバッグログ:イベントが発火しているか確認 ---
+console.log(
+    "MESSAGE RECEIVED:",
+    "channel=" + message.channel.id,
+    "content=" + JSON.stringify(message.content)
+);
+
 
 const mention =
 message.mentions.users.has(
@@ -101,8 +153,10 @@ message.content
 
 
 
-if(!mention && !command)
-return;
+if(!mention && !command){
+    console.log("SKIP: not mention/command");
+    return;
+}
 
 
 
@@ -390,13 +444,33 @@ error
 // ===============================
 
 
-async function startDiscordBot(){
+async function startDiscordBot(retryDelayMs = 5000){
 
+    try{
 
-await client.login(
-process.env.DISCORD_TOKEN
-);
+        await client.login(
+            process.env.DISCORD_TOKEN
+        );
 
+    }
+    catch(error){
+
+        console.error(
+            "Discord Login Error:",
+            error
+        );
+
+        console.log(
+            `Retrying Discord login in ${retryDelayMs / 1000}s...`
+        );
+
+        // 指数バックオフで再試行(最大5分間隔)
+        setTimeout(
+            () => startDiscordBot(Math.min(retryDelayMs * 2, 300000)),
+            retryDelayMs
+        );
+
+    }
 
 }
 
