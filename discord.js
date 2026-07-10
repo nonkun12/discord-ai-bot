@@ -141,43 +141,51 @@ await message.channel.sendTyping();
 // 名前保存
 // ===============================
 
-
 const nameMatch =
 text.match(
-/私の名前は\s*([^？?]+?)(です|だよ|です。)?$/
+    /^私の名前は\s*[、,]?\s*(.+?)(です|だよ|です。|だ。|。)?$/
 );
 
 
-
-if(nameMatch){
-
-
-const name =
-nameMatch[1].trim();
+if (nameMatch) {
 
 
-
-await saveMemory(
-
-message.author.id,
-
-"name",
-
-name
-
-);
+    const name =
+        nameMatch[1]
+            .trim()
+            .replace(/^[、,\s]+/, "")
+            .replace(/[。！？?]$/, "");
 
 
+    // ? や ？だけは保存しない
+    if (
+        name === "" ||
+        name === "?" ||
+        name === "？"
+    ) {
+        return;
+    }
 
-await message.reply(
 
-`${name}さんですね。覚えました。`
+    await saveMemory(
 
-);
+        message.author.id,
+
+        "name",
+
+        name
+
+    );
 
 
-return;
+    await message.reply(
 
+        `${name}さんですね。覚えました。`
+
+    );
+
+
+    return;
 
 }
 
