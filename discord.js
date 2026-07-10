@@ -137,6 +137,49 @@ await message.channel.sendTyping();
 
 
 
+
+
+
+
+// ===============================
+// 名前確認
+// ===============================
+
+
+if(
+text.includes("私の名前")
+){
+
+
+const name =
+await findName(
+message.author.id
+);
+
+
+
+if(name){
+
+await message.reply(
+`あなたの名前は${name}です。`
+);
+
+
+}else{
+
+await message.reply(
+"まだ名前を覚えていません。"
+);
+
+
+}
+
+
+return;
+
+
+}
+
 // ===============================
 // 名前保存
 // ===============================
@@ -188,49 +231,6 @@ if (nameMatch) {
     return;
 
 }
-
-
-
-// ===============================
-// 名前確認
-// ===============================
-
-
-if(
-text.includes("私の名前")
-){
-
-
-const name =
-await findName(
-message.author.id
-);
-
-
-
-if(name){
-
-await message.reply(
-`あなたの名前は${name}です。`
-);
-
-
-}else{
-
-await message.reply(
-"まだ名前を覚えていません。"
-);
-
-
-}
-
-
-return;
-
-
-}
-
-
 
 
 // ===============================
